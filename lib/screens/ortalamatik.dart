@@ -1,52 +1,288 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/screens/ortalamatik.dart';
+import 'package:myapp/models/Lesson.dart';
+import 'package:myapp/utils/drawer.dart';
 
-class ortalamatik extends StatefulWidget {
-  const ortalamatik({super.key});
+class Ortalamatik extends StatefulWidget {
+  const Ortalamatik({Key? key}) : super(key: key);
 
   @override
-  State<ortalamatik> createState() => _ortalamatikState();
+  State<Ortalamatik> createState() => _OrtalamatikState();
 }
 
-List<String> ders = ['1 Kredi', '2 Kredi', '3 Kredi', '4 Kredi'];
+TextEditingController _dersAdi = TextEditingController();
+TextEditingController _dersNotu = TextEditingController();
+String _credit = "1";
+var items = [
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+];
 
-class _ortalamatikState extends State<ortalamatik> {
-  List<Models> model = [];
-  String dersAdi = "";
-  final dersadi = TextEditingController();
-  final dersnotu = TextEditingController();
+class _OrtalamatikState extends State<Ortalamatik> {
+  double ortalama = 0.0;
+  double dersOrtalamasi = 0;
+  double tumDerslerinOrtalamasi = 0;
+  int toplamKredi = 0;
+  List<Lesson> lessons = [];
 
-  String dropdown = ders.first;
-  int _kredi = 0;
-  double ortalama = 0;
-
-  void dropdownvalue() {
-    setState(() {
-      if (dropdown == ders[0]) {
-        _kredi = 1;
-      }
-      if (dropdown == ders[1]) {
-        _kredi = 2;
-      }
-      if (dropdown == ders[2]) {
-        _kredi = 3;
-      }
-      if (dropdown == ders[3]) {
-        _kredi = 4;
-      }
-    });
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      drawer: MyDrawer(),
+      appBar: AppBar(
+        title: const Text(
+          "OrtalaMatik-1213 Berat Çoban",
+          style: TextStyle(color: Colors.yellow),
+        ),
+        backgroundColor: Colors.purple[200],
+      ),
+      body: Column(
+        children: [
+          Container(
+            color: Colors.amberAccent[800],
+            child: Column(
+              children: [
+                const SizedBox(height: 13),
+                Padding(
+                  padding: const EdgeInsets.only(top: 20, left: 10, right: 10),
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _dersAdi,
+                        style:
+                            const TextStyle(fontSize: 20, color: Colors.black),
+                        decoration: InputDecoration(
+                          hintText: "Ders Adı",
+                          hintStyle: const TextStyle(
+                              color: Colors.black, fontSize: 22),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          contentPadding: const EdgeInsets.only(
+                              left: 20, top: 17, bottom: 17, right: 20),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField(
+                              value: items.first,
+                              style: const TextStyle(
+                                  fontSize: 20, color: Colors.black),
+                              items: items.map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text("$value Kredi"),
+                                );
+                              }).toList(),
+                              onChanged: (selectedValue) {
+                                _credit = selectedValue!;
+                              },
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _dersNotu,
+                              style: const TextStyle(
+                                  fontSize: 20, color: Colors.black),
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                hintText: "Ders Notu",
+                                hintStyle: const TextStyle(
+                                    color: Colors.black, fontSize: 22),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                                contentPadding: const EdgeInsets.only(
+                                    left: 20, top: 17, bottom: 17, right: 20),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 33),
+                Container(
+                  height: 3,
+                  color: Colors.red[200],
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Text(
+                    "Ortalama : $ortalama",
+                    style: const TextStyle(fontSize: 26),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 3,
+                  color: Colors.red[200],
+                ),
+                const SizedBox(height: 22),
+              ],
+            ),
+          ),
+          const SizedBox(height: 2),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.50,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: lessons.length,
+              itemBuilder: (context, index) {
+                return InkWell(
+                  onLongPress: () {
+                    setState(() {
+                      var item = lessons.firstWhere(
+                          (element) => element.id == lessons[index].id);
+                      lessons.remove(item);
+                      ortalamaHesapla();
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10, right: 10),
+                    child: Container(
+                      height: 100,
+                      margin: const EdgeInsets.only(top: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.deepOrange[100],
+                        border: Border.all(color: Colors.red),
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Padding(
+                        padding:
+                            const EdgeInsets.only(left: 25, top: 10, right: 25),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 3),
+                            Text(
+                              lessons[index].name,
+                              style: const TextStyle(
+                                  fontSize: 22, fontWeight: FontWeight.bold),
+                            ),
+                            Container(height: 2, color: Colors.red),
+                            const SizedBox(height: 3),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 10),
+                              child: Row(
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        "Kredi:",
+                                        style: TextStyle(fontSize: 22),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(lessons[index].credit.toString(),
+                                          style: const TextStyle(
+                                              fontSize: 25, color: Colors.red)),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 35),
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        "Notu:",
+                                        style: TextStyle(fontSize: 22),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        lessons[index].note.toString(),
+                                        style: const TextStyle(
+                                          fontSize: 25,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const Spacer(),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.red[200],
+        onPressed: () {
+          if (_dersAdi.text == "") {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text("HATA!!"),
+                content: const Text("Lütfen ders adı giriniz."),
+                actions: [
+                  TextButton(
+                    child: const Text("OK"),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  )
+                ],
+              ),
+            );
+          } else if (_dersNotu.text == "") {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text("HATA!!"),
+                content: const Text("Lütfen ders notu giriniz."),
+                actions: [
+                  TextButton(
+                    child: const Text("OK"),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  )
+                ],
+              ),
+            );
+          } else {
+            setState(() {
+              addLesson();
+              ortalamaHesapla();
+              _dersAdi.clear();
+              _dersNotu.clear();
+            });
+          }
+          print(lessons);
+        },
+        child: const Icon(
+          Icons.add,
+          color: Colors.black,
+          size: 30,
+        ),
+      ),
+    );
   }
 
-  void Ortalama() {
+  void ortalamaHesapla() {
     setState(() {
-      int dersOrtalamasi = 0;
-      int tumDerslerinOrtalamasi = 0;
-      int toplamKredi = 0;
-      if (model.isNotEmpty) {
-        for (var item in model) {
-          dersOrtalamasi = item.dersnotu * item.derskredi;
+      if (lessons.isNotEmpty) {
+        for (var item in lessons) {
+          dersOrtalamasi = item.note * item.credit;
           tumDerslerinOrtalamasi = tumDerslerinOrtalamasi + dersOrtalamasi;
-          toplamKredi = toplamKredi + item.derskredi;
+          toplamKredi = toplamKredi + item.credit;
         }
         ortalama = tumDerslerinOrtalamasi / toplamKredi;
       } else {
@@ -55,177 +291,13 @@ class _ortalamatikState extends State<ortalamatik> {
     });
   }
 
-  void DersEkle() {
+  void addLesson() {
     setState(() {
-      model.add(Models(
-          id: model.isNotEmpty ? model.last.id + 1 : 1,
-          baslik: dersadi.text,
-          derskredi: _kredi,
-          dersnotu: int.parse(dersnotu.text)));
+      lessons.add(Lesson(
+          id: lessons.isNotEmpty ? lessons.last.id + 1 : 1,
+          name: _dersAdi.text,
+          credit: int.parse(_credit),
+          note: double.parse(_dersNotu.text)));
     });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Ortalamatik"),
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-        ),
-        onPressed: () {
-          setState(() {
-            dropdownvalue();
-            DersEkle();
-            Ortalama();
-            dersadi.clear();
-            dersnotu.clear();
-          });
-        },
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(40, 30, 40, 20),
-            child: TextFormField(
-              controller: dersadi,
-              keyboardType: TextInputType.text,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: "Ders Adi",
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(0, 25, 0, 10),
-            child: Container(
-              decoration: const BoxDecoration(
-                  border: Border(
-                bottom: BorderSide(color: Colors.amber),
-              )),
-            ),
-          ),
-          Container(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-              child: Text(
-                "Ortalama: $ortalama",
-                style: const TextStyle(
-                  fontSize: 36,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(0, 10, 0, 25),
-            child: Container(
-              decoration: const BoxDecoration(
-                  border: Border(
-                bottom: BorderSide(color: Colors.amber),
-              )),
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    const Expanded(
-                        child: SizedBox(
-                      width: 10,
-                    )),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(0, 10, 10, 0),
-                        child: DropdownButtonFormField<String>(
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(
-                              borderSide:
-                                  BorderSide(width: 5, color: Colors.amber),
-                            ),
-                          ),
-                          value: dropdown,
-                          icon: const Icon(Icons.keyboard_arrow_down),
-                          items: ders.map((String ders) {
-                            return DropdownMenuItem(
-                              value: ders,
-                              child: Text(ders),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              dropdown = newValue!;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 20,
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
-                        child: TextFormField(
-                          controller: dersnotu,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            hintText: "Ders Notu",
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Expanded(
-                        child: SizedBox(
-                      width: 10,
-                      child: Padding(padding: EdgeInsets.fromLTRB(0, 0, 0, 10)),
-                    )),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          Expanded(
-            child: Container(
-              alignment: Alignment.topCenter,
-              padding: const EdgeInsets.fromLTRB(300, 20, 300, 20),
-              child: ListView.separated(
-                separatorBuilder: (context, index) => const Divider(
-                  height: 5,
-                  color: Colors.transparent,
-                ),
-                itemCount: model.length,
-                itemBuilder: (BuildContext context, int index) {
-                  Models ders = model[index];
-                  return ListTile(
-                    tileColor: Colors.amber,
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(width: 0),
-                    ),
-                    title: InkWell(
-                      child: Text(
-                        " ${ders.baslik} Ders Kredi: ${ders.derskredi} Ders Not:${ders.dersnotu}",
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    onLongPress: () {
-                      setState(() {
-                        model.remove(ders);
-                        Ortalama();
-                      });
-                    },
-                  );
-                },
-              ),
-            ),
-          )
-        ],
-      ),
-    );
   }
 }
